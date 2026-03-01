@@ -25,26 +25,27 @@ KEYCLOAK_CLIENT_ID=   # Keycloak client ID
 KEYCLOAK_CLIENT_SECRET=  # Leave empty for public clients
 ```
 
-Keycloak client must have **Direct Access Grants** enabled (Resource Owner Password Credentials flow).
+Keycloak client must have **Standard flow** enabled (Authorization Code flow).
 
 ## Architecture
 
-**Auth split — two config files are required by next-auth v5:**
+**Auth — single config file:**
 
-- `auth.config.ts` — edge-compatible config (no Node-only imports). Used exclusively by `middleware.ts` to run route guards on the Edge runtime.
-- `auth.ts` — full config that spreads `authConfig` and adds the Credentials provider. Imported by server components and API routes.
+- `auth.ts` — sole NextAuth config. Owns `pages`, `authorized` callback, `session` strategy, and the Keycloak provider. Imported by server components, API routes, and `proxy.ts`.
 
-The Credentials provider calls Keycloak's token endpoint (`/protocol/openid-connect/token`) with `grant_type=password`, then fetches `/userinfo` to build the session user. Sessions are JWT-based (no database).
+`auth.config.ts` has been deleted. The edge-compatible split it provided was only necessary when `middleware.ts` ran on the Edge runtime. Next.js 16 replaced `middleware.ts` with `proxy.ts`, which runs on Node.js, so the split is no longer needed.
+
+Login uses Keycloak's OAuth flow (Authorization Code + PKCE). Sessions are JWT-based (no database). No access or ID tokens are stored in the session — only the default `user` object (name, email, image) from Keycloak's userinfo endpoint.
 
 **Route protection flow:**
 
-1. `middleware.ts` runs `auth` from the edge-compatible config on every request matching `/index` or `/index/*`.
+1. `proxy.ts` re-exports `auth` from `./auth` as its default and matches `/index` and `/index/*`.
 2. Unauthenticated requests are redirected to `/login?callbackUrl=<original-path>` automatically by next-auth's `authorized` callback returning `false`.
-3. After login, `app/login/page.tsx` reads `callbackUrl` from search params and pushes to it via `router.push`.
+3. `app/login/page.tsx` fires `signIn("keycloak", { callbackUrl })` on mount, delegating the full OAuth redirect to next-auth.
 
 **State management:**
 
-All client-side state lives in Zustand stores under `stores/`. Currently `stores/authStore.ts` owns login form fields (`username`, `password`), async state (`isLoading`, `error`), and the `login`/`logout` actions that delegate to next-auth's `signIn`/`signOut`.
+No Zustand stores are currently in use. Call next-auth's `signIn`/`signOut` directly where needed.
 
 **Component/page contract:**
 

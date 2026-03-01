@@ -4,7 +4,21 @@
       "Bash(npm install:*)",
       "Bash(node:*)",
       "Bash(npx tsc:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "WebFetch(domain:authjs.dev)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:next-auth.js.org)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.neosync.dev)",
+      "WebFetch(domain:koyukan.medium.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
